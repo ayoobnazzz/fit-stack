@@ -44,11 +44,11 @@ const Layout = ({ children }: LayoutProps) => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/login');
+    navigate('/');
   };
 
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Workouts', icon: <FitnessCenterIcon />, path: '/workouts' },
     { text: 'Progress', icon: <TrendingUpIcon />, path: '/progress' },
     { text: 'Exercises', icon: <LibraryBooksIcon />, path: '/exercises' },
