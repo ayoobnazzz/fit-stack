@@ -62,12 +62,14 @@ export const getUserStats = async (req, res) => {
       }
     }
 
+    const user = await User.findById(req.userId);
+    
     res.json({
       success: true,
       data: {
         totalWorkouts,
         currentStreak: streak,
-        memberSince: req.user.createdAt,
+        memberSince: user?.createdAt || new Date(),
       },
     });
   } catch (error) {

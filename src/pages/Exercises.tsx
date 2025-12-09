@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -11,6 +11,8 @@ import {
   Tab,
   IconButton,
   Container,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -19,99 +21,71 @@ import {
   FavoriteBorder as FavoriteBorderIcon,
   LibraryBooks as LibraryBooksIcon,
 } from '@mui/icons-material';
+import { exercisesAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+
+interface Exercise {
+  _id: string;
+  name: string;
+  category: string;
+  muscleGroups: string[];
+  difficulty: string;
+  equipment: string;
+  description: string;
+}
 
 const Exercises = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryTab, setCategoryTab] = useState(0);
-  const [favorites, setFavorites] = useState<Set<number>>(new Set([1, 3]));
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const categories = ['All', 'Strength', 'Cardio', 'Flexibility', 'HIIT'];
 
-  const exercises = [
-    {
-      id: 1,
-      name: 'Bench Press',
-      category: 'Strength',
-      muscleGroups: ['Chest', 'Shoulders', 'Triceps'],
-      difficulty: 'Intermediate',
-      equipment: 'Barbell',
-      description: 'A compound exercise targeting the chest, shoulders, and triceps.',
-    },
-    {
-      id: 2,
-      name: 'Running',
-      category: 'Cardio',
-      muscleGroups: ['Legs', 'Cardiovascular'],
-      difficulty: 'Beginner',
-      equipment: 'None',
-      description: 'Great cardiovascular exercise that improves endurance and burns calories.',
-    },
-    {
-      id: 3,
-      name: 'Deadlift',
-      category: 'Strength',
-      muscleGroups: ['Back', 'Legs', 'Core'],
-      difficulty: 'Advanced',
-      equipment: 'Barbell',
-      description: 'A fundamental compound movement that targets multiple muscle groups.',
-    },
-    {
-      id: 4,
-      name: 'Yoga Poses',
-      category: 'Flexibility',
-      muscleGroups: ['Full Body'],
-      difficulty: 'Beginner',
-      equipment: 'Mat',
-      description: 'Improves flexibility, balance, and mental well-being.',
-    },
-    {
-      id: 5,
-      name: 'Burpees',
-      category: 'HIIT',
-      muscleGroups: ['Full Body'],
-      difficulty: 'Intermediate',
-      equipment: 'None',
-      description: 'High-intensity full-body exercise that combines squat, plank, and jump.',
-    },
-    {
-      id: 6,
-      name: 'Squats',
-      category: 'Strength',
-      muscleGroups: ['Legs', 'Glutes'],
-      difficulty: 'Beginner',
-      equipment: 'None',
-      description: 'A fundamental lower body exercise targeting quads, glutes, and hamstrings.',
-    },
-    {
-      id: 7,
-      name: 'Cycling',
-      category: 'Cardio',
-      muscleGroups: ['Legs', 'Cardiovascular'],
-      difficulty: 'Beginner',
-      equipment: 'Bicycle',
-      description: 'Low-impact cardiovascular exercise that strengthens legs and improves endurance.',
-    },
-    {
-      id: 8,
-      name: 'Pull-ups',
-      category: 'Strength',
-      muscleGroups: ['Back', 'Biceps'],
-      difficulty: 'Advanced',
-      equipment: 'Pull-up Bar',
-      description: 'Excellent upper body exercise targeting the back and biceps.',
-    },
-    {
-      id: 9,
-      name: 'Plank',
-      category: 'Strength',
-      muscleGroups: ['Core'],
-      difficulty: 'Beginner',
-      equipment: 'None',
-      description: 'Isometric core exercise that strengthens the entire core region.',
-    },
-  ];
+  useEffect(() => {
+    fetchExercises();
+  }, [categoryTab]);
 
-  const toggleFavorite = (id: number) => {
+  const fetchExercises = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const category = categoryTab === 0 ? undefined : categories[categoryTab];
+      const params: any = {};
+      
+      if (category) {
+        params.category = category;
+      }
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+
+      const response = await exercisesAPI.getAll(params);
+      setExercises(response.data.data || []);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to fetch exercises');
+      console.error('Error fetching exercises:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery !== '') {
+        fetchExercises();
+      } else {
+        fetchExercises();
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const toggleFavorite = (id: string) => {
     const newFavorites = new Set(favorites);
     if (newFavorites.has(id)) {
       newFavorites.delete(id);
@@ -119,6 +93,7 @@ const Exercises = () => {
       newFavorites.add(id);
     }
     setFavorites(newFavorites);
+    // TODO: Save favorites to backend or localStorage
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -135,10 +110,12 @@ const Exercises = () => {
   };
 
   const filteredExercises = exercises.filter((exercise) => {
-    const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exercise.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryTab === 0 || exercise.category === categories[categoryTab];
-    return matchesSearch && matchesCategory;
+    if (searchQuery) {
+      const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        exercise.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    }
+    return true;
   });
 
   return (
@@ -243,94 +220,106 @@ const Exercises = () => {
           </Tabs>
         </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-          {filteredExercises.map((exercise) => (
-            <Box key={exercise.id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  borderRadius: 2,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  border: '1px solid #e2e8f0',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                  },
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          p: 1,
-                          borderRadius: 2,
-                          bgcolor: '#edf2f7',
-                          color: '#51cbce',
-                        }}
-                      >
-                        <FitnessCenterIcon />
-                      </Box>
-                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#0a2540' }}>
-                        {exercise.name}
-                      </Typography>
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => toggleFavorite(exercise.id)}
-                      sx={{ color: favorites.has(exercise.id) ? '#f56565' : '#a0aec0' }}
-                    >
-                      {favorites.has(exercise.id) ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    </IconButton>
-                  </Box>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
 
-                  <Typography variant="body2" sx={{ color: '#718096', mb: 2, flexGrow: 1 }}>
-                    {exercise.description}
-                  </Typography>
-
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                    <Chip
-                      label={exercise.difficulty}
-                      size="small"
-                      sx={{
-                        bgcolor: getDifficultyColor(exercise.difficulty),
-                        color: exercise.difficulty === 'Advanced' ? 'white' : '#0a2540',
-                        fontWeight: 600,
-                      }}
-                    />
-                    <Chip label={exercise.category} size="small" variant="outlined" />
-                    <Chip label={exercise.equipment} size="small" variant="outlined" />
-                  </Box>
-
-                  <Box>
-                    <Typography variant="caption" sx={{ color: '#718096', fontWeight: 600, mb: 0.5, display: 'block' }}>
-                      Muscle Groups:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {exercise.muscleGroups.map((muscle, index) => (
-                        <Chip
-                          key={index}
-                          label={muscle}
-                          size="small"
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+            {filteredExercises.map((exercise) => (
+              <Box key={exercise._id}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                    },
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
                           sx={{
-                            bgcolor: '#f7fafc',
-                            color: '#4a5568',
-                            fontSize: '0.7rem',
+                            p: 1,
+                            borderRadius: 2,
+                            bgcolor: '#edf2f7',
+                            color: '#51cbce',
                           }}
-                        />
-                      ))}
+                        >
+                          <FitnessCenterIcon />
+                        </Box>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#0a2540' }}>
+                          {exercise.name}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleFavorite(exercise._id)}
+                        sx={{ color: favorites.has(exercise._id) ? '#f56565' : '#a0aec0' }}
+                      >
+                        {favorites.has(exercise._id) ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                      </IconButton>
                     </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-          ))}
-        </Box>
 
-        {filteredExercises.length === 0 && (
+                    <Typography variant="body2" sx={{ color: '#718096', mb: 2, flexGrow: 1 }}>
+                      {exercise.description}
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      <Chip
+                        label={exercise.difficulty}
+                        size="small"
+                        sx={{
+                          bgcolor: getDifficultyColor(exercise.difficulty),
+                          color: exercise.difficulty === 'Advanced' ? 'white' : '#0a2540',
+                          fontWeight: 600,
+                        }}
+                      />
+                      <Chip label={exercise.category} size="small" variant="outlined" />
+                      <Chip label={exercise.equipment} size="small" variant="outlined" />
+                    </Box>
+
+                    <Box>
+                      <Typography variant="caption" sx={{ color: '#718096', fontWeight: 600, mb: 0.5, display: 'block' }}>
+                        Muscle Groups:
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {exercise.muscleGroups.map((muscle, index) => (
+                          <Chip
+                            key={index}
+                            label={muscle}
+                            size="small"
+                            sx={{
+                              bgcolor: '#f7fafc',
+                              color: '#4a5568',
+                              fontSize: '0.7rem',
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {!loading && filteredExercises.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography variant="h6" sx={{ color: '#718096', mb: 1 }}>
               No exercises found
