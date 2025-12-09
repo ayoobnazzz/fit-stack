@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -14,6 +14,8 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  Button,
+  Divider,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -22,7 +24,9 @@ import {
   LibraryBooks as LibraryBooksIcon,
   Person as PersonIcon,
   Menu as MenuIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
 
 const drawerWidth = 260;
 
@@ -35,6 +39,13 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
@@ -49,7 +60,7 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   const drawer = (
-    <Box sx={{ height: '100%', bgcolor: '#0a2540' }}>
+    <Box sx={{ height: '100%', bgcolor: '#0a2540', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ p: 3, bgcolor: '#081b2e', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <Typography
           variant="h5"
@@ -94,6 +105,35 @@ const Layout = ({ children }: LayoutProps) => {
           );
         })}
       </List>
+      <Box sx={{ mt: 'auto', p: 2 }}>
+        <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.1)' }} />
+        {user && (
+          <Box sx={{ mb: 2, px: 2 }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', mb: 0.5 }}>
+              Signed in as
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#51cbce', fontWeight: 600 }}>
+              {user.email}
+            </Typography>
+          </Box>
+        )}
+        <Button
+          fullWidth
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+          sx={{
+            color: 'rgba(255, 255, 255, 0.7)',
+            justifyContent: 'flex-start',
+            textTransform: 'none',
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.05)',
+              color: '#f56565',
+            },
+          }}
+        >
+          Logout
+        </Button>
+      </Box>
     </Box>
   );
 

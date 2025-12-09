@@ -24,8 +24,10 @@ import {
   Security as SecurityIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
 
 const Profile = () => {
+  const { user } = useAuth();
   const userStats = [
     { label: 'Total Workouts', value: '156' },
     { label: 'Current Streak', value: '7 days' },
@@ -102,13 +104,13 @@ const Profile = () => {
                     fontSize: '3rem',
                   }}
                 >
-                  JD
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </Avatar>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: '#0a2540', mb: 0.5 }}>
-                  John Doe
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#718096', mb: 3 }}>
-                  Fitness Enthusiast
+                  {user?.email || 'Fitness Enthusiast'}
                 </Typography>
                 <Button
                   variant="outlined"
@@ -170,7 +172,7 @@ const Profile = () => {
                       <TextField
                         fullWidth
                         label="First Name"
-                        defaultValue="John"
+                        defaultValue={user?.user_metadata?.first_name || ''}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 2,
@@ -182,7 +184,7 @@ const Profile = () => {
                       <TextField
                         fullWidth
                         label="Last Name"
-                        defaultValue="Doe"
+                        defaultValue={user?.user_metadata?.last_name || ''}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 2,
@@ -196,7 +198,8 @@ const Profile = () => {
                       fullWidth
                       label="Email"
                       type="email"
-                      defaultValue="john.doe@example.com"
+                      value={user?.email || ''}
+                      disabled
                       InputProps={{
                         startAdornment: (
                           <Box sx={{ mr: 1, color: '#718096' }}>
