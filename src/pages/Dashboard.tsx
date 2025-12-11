@@ -51,7 +51,6 @@ const Dashboard = () => {
         workoutsAPI.getAll(),
       ]);
 
-      const userStats = statsResponse.data.data || {};
       const workouts = workoutsResponse.data.data || [];
 
       // Calculate stats

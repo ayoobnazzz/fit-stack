@@ -25,7 +25,6 @@ import {
 
 const Workouts = () => {
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedWorkout, setSelectedWorkout] = useState<string | null>(null);
 
   const workoutTemplates = [
     {
@@ -84,8 +83,7 @@ const Workouts = () => {
     },
   ];
 
-  const handleStartWorkout = (workoutId: string) => {
-    setSelectedWorkout(workoutId);
+  const handleStartWorkout = () => {
     setOpenDialog(true);
   };
 

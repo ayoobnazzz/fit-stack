@@ -38,7 +38,6 @@ const Layout = ({ children }: LayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
