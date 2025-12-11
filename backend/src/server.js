@@ -13,6 +13,22 @@ import userRoutes from './routes/users.js';
 // Load environment variables
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnvVars = ['MONGODB_URI'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars.join(', '));
+  process.exit(1);
+}
+
+// Log environment status (without sensitive data)
+console.log('Environment check:');
+console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('- PORT:', process.env.PORT || '5000 (default)');
+console.log('- MONGODB_URI:', process.env.MONGODB_URI ? '✓ Set' : '✗ Missing');
+console.log('- FRONTEND_URL:', process.env.FRONTEND_URL || 'not set');
+
 // Connect to database
 connectDB();
 
