@@ -12,8 +12,6 @@ import {
   Box,
   Typography,
   IconButton,
-  useTheme,
-  useMediaQuery,
   Button,
   Divider,
 } from '@mui/material';
@@ -37,7 +35,6 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const theme = useTheme();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 

@@ -46,7 +46,7 @@ const Dashboard = () => {
       setError(null);
 
       // Fetch user stats and recent workouts in parallel
-      const [statsResponse, workoutsResponse] = await Promise.all([
+      const [, workoutsResponse] = await Promise.all([
         usersAPI.getStats(),
         workoutsAPI.getAll(),
       ]);
@@ -78,7 +78,9 @@ const Dashboard = () => {
         checkDate.setHours(0, 0, 0, 0);
         
         for (const workout of sortedWorkouts) {
-          const workoutDate = new Date(workout.date || workout.createdAt);
+          const dateValue = workout.date || workout.createdAt;
+          if (!dateValue) continue;
+          const workoutDate = new Date(dateValue);
           workoutDate.setHours(0, 0, 0, 0);
           
           if (workoutDate.getTime() === checkDate.getTime()) {

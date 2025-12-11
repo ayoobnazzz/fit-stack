@@ -22,7 +22,6 @@ import {
   LibraryBooks as LibraryBooksIcon,
 } from '@mui/icons-material';
 import { exercisesAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
 
 interface Exercise {
   _id: string;

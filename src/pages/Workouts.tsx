@@ -251,7 +251,7 @@ const Workouts = () => {
                     variant="contained"
                     fullWidth
                     startIcon={<PlayIcon />}
-                    onClick={() => handleStartWorkout(workout.id.toString())}
+                    onClick={handleStartWorkout}
                     sx={{
                       mt: 'auto',
                       borderRadius: 2,
